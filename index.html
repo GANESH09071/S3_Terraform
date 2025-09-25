@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Simple Ticketing — Event Tickets</title>
+<style>
+  :root{
+    --bg:#0f1724;
+    --card:#0b1220;
+    --accent:#ff6b6b;
+    --muted:#9aa4b2;
+    --glass: rgba(255,255,255,0.04);
+    --radius:12px;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background:linear-gradient(180deg,#071022 0%, #071b2a 100%);
+    color:#e6eef6;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    padding:32px;
+  }
+
+  .container{max-width:1000px;margin:0 auto;}
+
+  header{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:16px;margin-bottom:28px;
+  }
+  .brand{
+    display:flex;align-items:center;gap:12px;
+  }
+  .logo{
+    width:54px;height:54px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#f7b267);
+    display:flex;align-items:center;justify-content:center;font-weight:700;color:#082032;
+    box-shadow:0 6px 18px rgba(0,0,0,.4);
+  }
+  .brand h1{font-size:18px;margin:0;}
+  nav a{color:var(--muted);text-decoration:none;margin-left:18px;font-size:14px}
+  .hero{
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    padding:28px;border-radius:var(--radius);display:flex;gap:20px;align-items:center;margin-bottom:22px;
+    box-shadow:0 6px 30px rgba(2,6,23,0.6);
+  }
+  .hero .left{flex:1}
+  .hero h2{margin:0 0 8px 0;font-size:22px}
+  .hero p{margin:0;color:var(--muted)}
+  .search{
+    display:flex;gap:8px;margin-top:14px;
+  }
+  .search input{
+    background:var(--glass);border:1px solid rgba(255,255,255,0.03);padding:10px 12px;border-radius:10px;color:inherit;flex:1;
+  }
+  .btn{
+    background:var(--accent);border:none;padding:10px 14px;border-radius:10px;color:#071022;font-weight:600;cursor:pointer;
+  }
+
+  .grid{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;
+  }
+  .card{
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.02);
+  }
+  .card img{width:100%;height:140px;object-fit:cover;border-radius:10px;margin-bottom:10px}
+  .card h3{margin:0 0 6px 0;font-size:16px}
+  .meta{font-size:13px;color:var(--muted);margin-bottom:10px}
+  .price-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .price{font-weight:700;font-size:18px}
+  .small{font-size:13px;color:var(--muted)}
+  footer{margin-top:26px;color:var(--muted);font-size:13px;text-align:center}
+
+  /* simple modal */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,0.6);display:none;align-items:center;justify-content:center;padding:20px}
+  .modal{background:#07182a;padding:18px;border-radius:12px;max-width:520px;width:100%}
+  .modal h4{margin:0 0 8px 0}
+  .modal .row{display:flex;gap:8px;margin-top:8px}
+  .modal input, .modal select{flex:1;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:inherit}
+  .modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+  .close{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 10px;border-radius:8px;color:var(--muted);cursor:pointer}
+
+  /* responsive tweaks */
+  @media (max-width:640px){
+    .hero{flex-direction:column;align-items:flex-start}
+    header{flex-direction:column;align-items:flex-start;gap:12px}
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="logo">T</div>
+        <div>
+          <h1>TickEasy</h1>
+          <div class="small">Buy tickets. Skip queues.</div>
+        </div>
+      </div>
+      <nav>
+        <a href="#">Events</a>
+        <a href="#">My Tickets</a>
+        <a href="#">Support</a>
+      </nav>
+    </header>
+
+    <section class="hero" aria-labelledby="hero-heading">
+      <div class="left">
+        <h2 id="hero-heading">Find events near you — concerts, sports, theatre & more</h2>
+        <p>Discover events, compare prices, and reserve your seat in seconds.</p>
+        <div class="search" role="search">
+          <input id="q" placeholder="Search for events, venues or cities" />
+          <button class="btn" onclick="search()">Search</button>
+        </div>
+      </div>
+      <div class="right" style="width:220px;text-align:right">
+        <div style="background:linear-gradient(135deg,#10283a,#0b3a52);padding:12px;border-radius:10px">
+          <div style="font-size:12px;color:var(--muted)">Featured</div>
+          <div style="font-weight:700;font-size:16px;margin-top:6px">Summer Live 2026</div>
+        </div>
+      </div>
+    </section>
+
+    <main>
+      <h3 style="margin:18px 0 10px 0">Popular events</h3>
+      <div class="grid" id="events">
+        <!-- Event card template -->
+        <article class="card" data-id="evt1">
+          <img src="https://images.unsplash.com/photo-1507874457470-272b3c8d8ee2?auto=format&fit=crop&w=800&q=60" alt="Concert">
+          <h3>City Beats — Live Concert</h3>
+          <div class="meta">Dec 12, 2025 · Metro Arena</div>
+          <div class="price-row">
+            <div>
+              <div class="price">₹1,200</div>
+              <div class="small">From</div>
+            </div>
+            <div>
+              <button class="btn" onclick="openModal('City Beats — Live Concert', '₹1,200')">Book</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="card" data-id="evt2">
+          <img src="https://images.unsplash.com/photo-1507925921958-8a62f3d1a50d?auto=format&fit=crop&w=800&q=60" alt="Theatre">
+          <h3>Moonlight Theatre — Hamlet</h3>
+          <div class="meta">Nov 02, 2025 · Royal Playhouse</div>
+          <div class="price-row">
+            <div>
+              <div class="price">₹850</div>
+              <div class="small">From</div>
+            </div>
+            <div>
+              <button class="btn" onclick="openModal('Moonlight Theatre — Hamlet', '₹850')">Book</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="card" data-id="evt3">
+          <img src="https://images.unsplash.com/photo-1508609349937-5ec4ae374ebf?auto=format&fit=crop&w=800&q=60" alt="Sport">
+          <h3>City FC vs United FC</h3>
+          <div class="meta">Oct 08, 2025 · National Stadium</div><div class="logos" style="display:flex;gap:10px;margin:6px 0;"><div style="flex:1;text-align:center"><img src="https://upload.wikimedia.org/wikipedia/commons/6/6e/Football_pictogram.svg" alt="City FC logo" style="height:40px;max-width:60px;object-fit:contain"></div><div style="flex:1;text-align:center"><img src="https://upload.wikimedia.org/wikipedia/commons/e/e7/Soccerball_masked.png" alt="United FC logo" style="height:40px;max-width:60px;object-fit:contain"></div></div>
+          <div class="price-row">
+            <div>
+              <div class="price">₹650</div>
+              <div class="small">From</div>
+            </div>
+            <div>
+              <button class="btn" onclick="openModal('City FC vs United FC', '₹650')">Book</button>
+            </div>
+          </div>
+        </article>
+      
+        <article class="card" data-id="evt4">
+          <img src="https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=800&q=60" alt="Cricket Match">
+          <h3>India vs Australia — T20 Series</h3>
+          <div class="meta">Jan 15, 2026 · Wankhede Stadium, Mumbai</div><div class="logos" style="display:flex;gap:10px;margin:6px 0;"><div style="flex:1;text-align:center"><img src="https://upload.wikimedia.org/wikipedia/en/4/41/Flag_of_India.svg" alt="India logo" style="height:40px;max-width:60px;object-fit:contain"></div><div style="flex:1;text-align:center"><img src="https://upload.wikimedia.org/wikipedia/en/b/b9/Flag_of_Australia.svg" alt="Australia logo" style="height:40px;max-width:60px;object-fit:contain"></div></div>
+          <div class="price-row">
+            <div>
+              <div class="price">₹1,500</div>
+              <div class="small">From</div>
+            </div>
+            <div>
+              <button class="btn" onclick="openModal('India vs Australia — T20 Series', '₹1,500')">Book</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="card" data-id="evt5">
+          <img src="https://images.unsplash.com/photo-1624655337255-f0ac6e9d8b64?auto=format&fit=crop&w=800&q=60" alt="Cricket Match">
+          <h3>Chennai Super Kings vs Mumbai Indians</h3>
+          <div class="meta">Apr 10, 2026 · Chepauk Stadium, Chennai</div><div class="logos" style="display:flex;gap:10px;margin:6px 0;"><div style="flex:1;text-align:center"><img src="https://upload.wikimedia.org/wikipedia/en/2/2e/Chennai_Super_Kings_Logo.svg" alt="Chennai Super Kings logo" style="height:40px;max-width:60px;object-fit:contain"></div><div style="flex:1;text-align:center"><img src="https://upload.wikimedia.org/wikipedia/en/2/25/Mumbai_Indians_Logo.svg" alt="Mumbai Indians logo" style="height:40px;max-width:60px;object-fit:contain"></div></div>
+          <div class="price-row">
+            <div>
+              <div class="price">₹2,000</div>
+              <div class="small">From</div>
+            </div>
+            <div>
+              <button class="btn" onclick="openModal('Chennai Super Kings vs Mumbai Indians', '₹2,000')">Book</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="card" data-id="evt6">
+          <img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=800&q=60" alt="Concert">
+          <h3>Arijit Singh Live — Soulful Evenings</h3>
+          <div class="meta">Feb 20, 2026 · Indira Gandhi Indoor Stadium, Delhi</div>
+          <div class="price-row">
+            <div>
+              <div class="price">₹2,500</div>
+              <div class="small">From</div>
+            </div>
+            <div>
+              <button class="btn" onclick="openModal('Arijit Singh Live — Soulful Evenings', '₹2,500')">Book</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="card" data-id="evt7">
+          <img src="https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?auto=format&fit=crop&w=800&q=60" alt="Concert">
+          <h3>Coldplay World Tour — India Leg</h3>
+          <div class="meta">Mar 12, 2026 · DY Patil Stadium, Navi Mumbai</div>
+          <div class="price-row">
+            <div>
+              <div class="price">₹4,500</div>
+              <div class="small">From</div>
+            </div>
+            <div>
+              <button class="btn" onclick="openModal('Coldplay World Tour — India Leg', '₹4,500')">Book</button>
+            </div>
+          </div>
+        </article>
+
+</div>
+
+      <footer>
+        © <span id="year"></span> TickEasy • Simple demo ticketing page — no payment collected.
+      </footer>
+    </main>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-backdrop" id="backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal" role="document" aria-labelledby="modal-title">
+      <h4 id="modal-title">Book tickets</h4>
+      <div id="modal-sub" class="small" style="color:var(--muted)">Event name</div>
+
+      <div class="row" style="margin-top:12px">
+        <input id="name" placeholder="Your name" />
+        <input id="email" placeholder="Email address" />
+      </div>
+
+      <div class="row">
+        <select id="qty" aria-label="Quantity">
+          <option value="1">1 ticket</option>
+          <option value="2">2 tickets</option>
+          <option value="3">3 tickets</option>
+          <option value="4">4 tickets</option>
+        </select>
+        <input id="phone" placeholder="Phone (optional)" />
+      </div>
+
+      <div class="actions">
+        <button class="close" onclick="closeModal()">Cancel</button>
+        <button class="btn" onclick="confirmBooking()">Confirm</button>
+      </div>
+      <div id="book-result" style="margin-top:10px;color:var(--muted);font-size:13px"></div>
+    </div>
+  </div>
+
+<script>
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  function search(){
+    const q = document.getElementById('q').value.trim();
+    if(!q) {
+      alert('Try typing a city, artist or venue name (e.g. "Mumbai", "rock", "stadium")');
+      return;
+    }
+    // For demo, do a naive filter by title
+    const cards = document.querySelectorAll('#events .card');
+    cards.forEach(c=>{
+      const title = c.querySelector('h3').textContent.toLowerCase();
+      c.style.display = title.includes(q.toLowerCase()) ? '' : 'none';
+    });
+  }
+
+  function openModal(title, price){
+    document.getElementById('backdrop').style.display = 'flex';
+    document.getElementById('modal-sub').textContent = title + ' • ' + price;
+    document.getElementById('book-result').textContent = '';
+    document.getElementById('name').focus();
+    document.getElementById('backdrop').setAttribute('aria-hidden','false');
+  }
+  function closeModal(){
+    document.getElementById('backdrop').style.display = 'none';
+    document.getElementById('backdrop').setAttribute('aria-hidden','true');
+  }
+  function confirmBooking(){
+    const name = document.getElementById('name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const qty = document.getElementById('qty').value;
+    if(!name || !email) {
+      document.getElementById('book-result').textContent = 'Please enter name and email.';
+      return;
+    }
+    // demo "booking" result
+    document.getElementById('book-result').textContent = `Thanks ${name}! Reservation for ${qty} ticket(s) made. A confirmation will be sent to ${email}. (Demo)`;
+    setTimeout(closeModal, 2200);
+  }
+
+  // close modal on backdrop click
+  document.getElementById('backdrop').addEventListener('click', function(e){
+    if(e.target === this) closeModal();
+  });
+
+  // keyboard friendly
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape') closeModal();
+  });
+</script>
+</body>
+</html>
